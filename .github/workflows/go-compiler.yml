@@ -14,17 +14,31 @@ on:
 
 jobs:
   build:
-    strategy:
-      fail-fast: false
-      matrix:
-        go_version:
-          - 1.15.5
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
-      - uses: actions/setup-go@v1
+      - name: Setup Node.js
+        uses: actions/setup-node@v1
         with:
-           go-version: '1.15.5' # The Go version to download (if necessary) and use.
+          node-version: '14.x'
+
+      - name: Set up Go 1.15
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Build static status page
+        run: cd status-web && yarn && yarn build && cd ../
+
+      - name: Get dependencies
+        run: go mod download && go get -u github.com/rakyll/statik
+
+      - name: Static->GO generation
+        run: cd cmd/server && statik --src=../../status-web/build/ && cd ../../
+      
       - run: chmod +x compiler.sh && ./compiler.sh
       -
         name: Upload production to Artifact
