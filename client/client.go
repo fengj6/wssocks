@@ -43,7 +43,8 @@ func NewHttpClient() (*http.Client, *http.Transport) {
 type Options struct {
 	LocalSocks5Addr string      // local listening address
 	HttpEnabled     bool        // enable http and https proxy
-	LocalHttpAddr   string      // listen address of http and https(if it is enabled)
+	LocalHttpAddr   string      // listen address of http and https (if it is enabled)
+	RemoteServerName	string	// remote server sni name (tls valid.)
 	RemoteUrl       *url.URL    // url of server
 	RemoteHeaders   http.Header // parsed websocket headers (not presented in flag).
 	ConnectionKey   string      // connection key for authentication
@@ -95,13 +96,25 @@ func (hdl *Handles) CreateServerConn(c *Options, ctx context.Context) (*wss.WebS
 
 	httpClient, transport := NewHttpClient()
 
-	if c.RemoteUrl.Scheme == "wss" && c.SkipTLSVerify {
-		// ignore insecure verify
-		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
-		log.Warnln("Warning: you have skipped verification of the server's certificate chain and host name. " +
-			"Then client will accepts any certificate presented by the server and any host name in that certificate. " +
-			"In this mode, TLS is susceptible to man-in-the-middle attacks.")
+	if c.RemoteUrl.Scheme == "wss" {
+		if c.RemoteServerName != "" {
+			if c.SkipTLSVerify {
+				transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true, ServerName: c.RemoteServerName}
+				log.Warnln("Warning: you have skipped verification of the server's certificate chain and host name. " +
+					"Then client will accepts any certificate presented by the server and any host name in that certificate. "	 +
+					"In this mode, TLS is susceptible to man-in-the-middle attacks.")
+			}else {
+				transport.TLSClientConfig = &tls.Config{ServerName: c.RemoteServerName}
+			}
+		}else if c.SkipTLSVerify {
+			// ignore insecure verify
+			transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+			log.Warnln("Warning: you have skipped verification of the server's certificate chain and host name. " +
+				"Then client will accepts any certificate presented by the server and any host name in that certificate. " +
+				"In this mode, TLS is susceptible to man-in-the-middle attacks.")
+		}
 	}
+	
 
 	// load and use option plugin
 	if clientPlugin.HasOptionPlugin() {

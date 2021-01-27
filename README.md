@@ -79,11 +79,11 @@ wssocks client --remote ws://example.com:1088 --key YOUR_CONNECTION_KEY
 Method 1: 
 In version 0.5.0, transfering data between wssocks client and wssocks server under TSL/SSL protocol is supported.
 
-At server side, use `--tsl` flag to enable TSL/SSL support, 
+At server side, use `--tls` flag to enable TSL/SSL support, 
 and specific path of certificate via `--tls-cert-file` and `--tls-key-file`.
 e.g.
 ```bash
-wssocks server --addr :1088 --tsl --tls-cert-file /path/of/certificate-file --tls-key-file /path/of/certificate-key-file
+wssocks server --addr :1088 --tls --tls-cert-file /path/of/certificate-file --tls-key-file /path/of/certificate-key-file
 ```
 At client side, we can then use `wss://example.com:1088` as remote address, for instance.
 
